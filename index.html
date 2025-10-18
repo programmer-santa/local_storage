@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tareas - LocalStorage & SessionStorage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 0.95em;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #taskInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        #taskInput:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #addBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #addBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        #addBtn:active {
+            transform: translateY(0);
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .filter-header h3 {
+            color: #333;
+            font-size: 1em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sessionstorage-indicator {
+            font-size: 1.2em;
+            padding: 5px 10px;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .tasks-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .task-item:hover {
+            background: #f0f1f5;
+            transform: translateX(5px);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .task-text {
+            color: #333;
+            font-size: 1em;
+            word-break: break-word;
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8em;
+        }
+
+        .storage-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 500;
+            color: white;
+        }
+
+        .localstorage-badge {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .task-date {
+            color: #999;
+            font-size: 0.75em;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        .storage-controls {
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .storage-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .storage-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .storage-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .storage-indicator {
+            font-size: 1.5em;
+            padding: 8px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .storage-indicator.localstorage {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .storage-indicator.sessionstorage {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .clear-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .clear-btn:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 600px) {
+            .storage-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .storage-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+
+        /* Scrollbar styling */
+        .tasks-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tasks-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .tasks-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .tasks-list::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .input-section {
+                flex-direction: column;
+            }
+
+            #addBtn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .filter-section {
+                justify-content: center;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-tasks"></i>
+                Mi Lista de Tareas
+            </h1>
+            <p>Organiza tus tareas de forma eficiente</p>
+        </div>
+
+        <div class="input-section">
+            <input 
+                type="text" 
+                id="taskInput" 
+                placeholder="Escribe una nueva tarea..."
+                autocomplete="off"
+            >
+            <button id="addBtn">
+                <i class="fas fa-plus"></i>
+                Agregar
+            </button>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-header">
+                <h3><i class="fas fa-filter"></i> Filtros (SessionStorage)</h3>
+                <span class="sessionstorage-indicator">📋</span>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="todas">
+                    <i class="fas fa-list"></i> Todas
+                </button>
+                <button class="filter-btn" data-filter="completadas">
+                    <i class="fas fa-check-circle"></i> Completadas
+                </button>
+                <button class="filter-btn" data-filter="pendientes">
+                    <i class="fas fa-circle"></i> Pendientes
+                </button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedCount">0</div>
+                <div class="stat-label">Completadas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+        </div>
+
+        <div class="tasks-list" id="tasksList"></div>
+
+        <div class="storage-controls">
+            <div class="storage-section">
+                <h3><i class="fas fa-database"></i> LocalStorage (Tareas)</h3>
+                <div class="storage-info">
+                    <span class="storage-indicator localstorage">💾</span>
+                    <span>Las tareas se guardan permanentemente</span>
+                    <button class="clear-btn" onclick="clearLocalStorage()">
+                        <i class="fas fa-trash"></i> Limpiar Tareas
+                    </button>
+                </div>
+            </div>
+            
+            <div class="storage-section">
+                <h3><i class="fas fa-filter"></i> SessionStorage (Filtros)</h3>
+                <div class="storage-info">
+                    <span class="storage-indicator sessionstorage">📋</span>
+                    <span>El filtro se guarda solo en esta sesión</span>
+                    <button class="clear-btn" onclick="clearSessionStorage()">
+                        <i class="fas fa-refresh"></i> Resetear Filtro
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>💾 LocalStorage:</strong> Tus tareas se guardan automáticamente y persisten incluso después de cerrar el navegador.<br>
+            <strong>📋 SessionStorage:</strong> El filtro seleccionado se guarda en la sesión actual y se reinicia al cerrar la pestaña.
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script>
+        // ============================================
+        // EXPLICACIÓN DE LOCALSTORAGE Y SESSIONSTORAGE
+        // ============================================
+        
+        // LocalStorage:
+        // - Almacena datos de forma permanente en el navegador
+        // - Los datos persisten incluso después de cerrar el navegador
+        // - Se usa para guardar tareas que queremos que se mantengan
+        // - Capacidad: ~5-10MB por dominio
+        // - Acceso: localStorage.setItem(key, value) / localStorage.getItem(key)
+        
+        // SessionStorage:
+        // - Almacena datos solo durante la sesión actual
+        // - Se borra cuando se cierra la pestaña o el navegador
+        // - Se usa para guardar el filtro seleccionado
+        // - Capacidad: ~5-10MB por dominio
+        // - Acceso: sessionStorage.setItem(key, value) / sessionStorage.getItem(key)
+
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        
+        const taskInput = document.getElementById('taskInput');
+        const addBtn = document.getElementById('addBtn');
+        const tasksList = document.getElementById('tasksList');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const totalCount = document.getElementById('totalCount');
+        const completedCount = document.getElementById('completedCount');
+        const pendingCount = document.getElementById('pendingCount');
+
+        let tasks = [];
+        let currentFilter = 'todas';
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        
+        function init() {
+            // Cargar tareas desde LocalStorage
+            loadTasksFromLocalStorage();
+            
+            // Cargar filtro desde SessionStorage
+            loadFilterFromSessionStorage();
+            
+            // Renderizar tareas
+            renderTasks();
+            
+            // Agregar event listeners
+            addBtn.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTask();
+            });
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+            });
+        }
+
+        // ============================================
+        // FUNCIONES DE LOCALSTORAGE
+        // ============================================
+        
+        function loadTasksFromLocalStorage() {
+            // Obtener tareas del LocalStorage
+            const stored = localStorage.getItem('tasks');
+            tasks = stored ? JSON.parse(stored) : [];
+        }
+
+        function saveTasksToLocalStorage() {
+            // Guardar tareas en LocalStorage
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // ============================================
+        // FUNCIONES DE SESSIONSTORAGE
+        // ============================================
+        
+        function loadFilterFromSessionStorage() {
+            // Obtener filtro del SessionStorage
+            const stored = sessionStorage.getItem('currentFilter');
+            if (stored) {
+                currentFilter = stored;
+            }
+        }
+
+        function saveFilterToSessionStorage() {
+            // Guardar filtro en SessionStorage
+            sessionStorage.setItem('currentFilter', currentFilter);
+        }
+
+        // ============================================
+        // FUNCIONES DE TAREAS
+        // ============================================
+        
+        function addTask() {
+            const text = taskInput.value.trim();
+            
+            // Validación: evitar tareas vacías
+            if (!text) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campo vacío',
+                    text: 'Por favor, escribe una tarea antes de agregar.',
+                    confirmButtonColor: '#667eea'
+                });
+                return;
+            }
+
+            // Crear nueva tarea
+            const newTask = {
+                id: Date.now(),
+                text: text,
+                completed: false,
+                createdAt: new Date().toLocaleString('es-ES')
+            };
+
+            // Agregar a la lista
+            tasks.push(newTask);
+            
+            // Guardar en LocalStorage
+            saveTasksToLocalStorage();
+            
+            // Limpiar input
+            taskInput.value = '';
+            taskInput.focus();
+            
+            // Renderizar
+            renderTasks();
+            
+            // Notificación
+            Swal.fire({
+                icon: 'success',
+                title: '¡Tarea agregada!',
+                text: `"${text}" ha sido agregada a tu lista.`,
+                timer: 1500,
+                showConfirmButton: false,
+                confirmButtonColor: '#667eea'
+            });
+        }
+
+        function toggleTask(id) {
+            // Encontrar y cambiar el estado de la tarea
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasksToLocalStorage();
+                renderTasks();
+            }
+        }
+
+        function deleteTask(id) {
+            // Encontrar la tarea a eliminar
+            const task = tasks.find(t => t.id === id);
+            
+            Swal.fire({
+                icon: 'question',
+                title: '¿Eliminar tarea?',
+                text: `¿Estás seguro de que deseas eliminar "${task.text}"?`,
+                showCancelButton: true,
+                confirmButtonColor: '#ff6b6b',
+                cancelButtonColor: '#999',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Eliminar tarea
+                    tasks = tasks.filter(t => t.id !== id);
+                    saveTasksToLocalStorage();
+                    renderTasks();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminada',
+                        text: 'La tarea ha sido eliminada.',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        confirmButtonColor: '#667eea'
+                    });
+                }
+            });
+        }
+
+        // ============================================
+        // FUNCIONES DE FILTRO
+        // ============================================
+        
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Guardar en SessionStorage
+            saveFilterToSessionStorage();
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            
+            // Renderizar
+            renderTasks();
+        }
+
+        function getFilteredTasks() {
+            // Filtrar tareas según el filtro actual
+            switch (currentFilter) {
+                case 'completadas':
+                    return tasks.filter(t => t.completed);
+                case 'pendientes':
+                    return tasks.filter(t => !t.completed);
+                default:
+                    return tasks;
+            }
+        }
+
+        // ============================================
+        // FUNCIONES DE RENDERIZADO
+        // ============================================
+        
+        function renderTasks() {
+            const filtered = getFilteredTasks();
+            
+            // Actualizar estadísticas
+            updateStats();
+            
+            // Limpiar lista
+            tasksList.innerHTML = '';
+            
+            // Si no hay tareas
+            if (filtered.length === 0) {
+                tasksList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>
+                            ${currentFilter === 'completadas' ? 'No hay tareas completadas' : 
+                              currentFilter === 'pendientes' ? 'No hay tareas pendientes' : 
+                              'No hay tareas. ¡Crea una nueva!'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Renderizar cada tarea
+            filtered.forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task-item ${task.completed ? 'completed' : ''}`;
+                taskEl.innerHTML = `
+                    <input 
+                        type="checkbox" 
+                        class="checkbox" 
+                        ${task.completed ? 'checked' : ''}
+                        onchange="toggleTask(${task.id})"
+                    >
+                    <div class="task-content">
+                        <span class="task-text">${escapeHtml(task.text)}</span>
+                        <div class="task-meta">
+                            <span class="storage-badge localstorage-badge" title="Guardado en LocalStorage">
+                                💾 LocalStorage
+                            </span>
+                            <span class="task-date">${task.createdAt}</span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="delete-btn" onclick="deleteTask(${task.id})">
+                            <i class="fas fa-trash"></i>
+                            Eliminar
+                        </button>
+                    </div>
+                `;
+                tasksList.appendChild(taskEl);
+            });
+        }
+
+        function updateStats() {
+            // Actualizar contadores
+            const completed = tasks.filter(t => t.completed).length;
+            const pending = tasks.filter(t => !t.completed).length;
+            
+            totalCount.textContent = tasks.length;
+            completedCount.textContent = completed;
+            pendingCount.textContent = pending;
+        }
+
+        // ============================================
+        // FUNCIONES AUXILIARES
+        // ============================================
+        
+        function escapeHtml(text) {
+            // Escapar caracteres especiales para evitar inyección de HTML
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // FUNCIONES DE LIMPIEZA DE ALMACENAMIENTO
+        // ============================================
+        
+        function clearLocalStorage() {
+            Swal.fire({
+                icon: 'warning',
+                title: '¿Limpiar todas las tareas?',
+                text: 'Esta acción eliminará TODAS las tareas permanentemente. No se puede deshacer.',
+                showCancelButton: true,
+                confirmButtonColor: '#ff6b6b',
+                cancelButtonColor: '#999',
+                confirmButtonText: 'Sí, eliminar todo',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Limpiar LocalStorage
+                    localStorage.removeItem('tasks');
+                    tasks = [];
+                    
+                    // Renderizar
+                    renderTasks();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'LocalStorage limpiado',
+                        text: 'Todas las tareas han sido eliminadas permanentemente.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        confirmButtonColor: '#667eea'
+                    });
+                }
+            });
+        }
+
+        function clearSessionStorage() {
+            Swal.fire({
+                icon: 'question',
+                title: '¿Resetear filtro?',
+                text: 'Esta acción reseteará el filtro seleccionado a "Todas".',
+                showCancelButton: true,
+                confirmButtonColor: '#2196F3',
+                cancelButtonColor: '#999',
+                confirmButtonText: 'Sí, resetear',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Limpiar SessionStorage
+                    sessionStorage.removeItem('currentFilter');
+                    currentFilter = 'todas';
+                    
+                    // Actualizar botones
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.filter === 'todas');
+                    });
+                    
+                    // Renderizar
+                    renderTasks();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'SessionStorage limpiado',
+                        text: 'El filtro ha sido reseteado a "Todas".',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        confirmButtonColor: '#667eea'
+                    });
+                }
+            });
+        }
+
+        // ============================================
+        // INICIAR LA APLICACIÓN
+        // ============================================
+        
+        init();
+    </script>
+</body>
+</html>
